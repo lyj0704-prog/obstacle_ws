@@ -76,31 +76,45 @@ ROS 2 package 이름은 `perception`이며, 기본 executable은 `detect`와
 
 ## 입력 토픽
 
-| Topic | Message type | Provider | Purpose |
-|---|---|---|---|
-| `/scan` | `sensor_msgs/msg/LaserScan` | LiDAR driver 또는 simulator | Detection 입력과 tracking visibility 검사 |
-| `/global_waypoints` | `f110_msgs/msg/WpntArray` | ForzaETH global planner/waypoint publisher | Frenet 변환, track boundary, lap 길이 |
-| `/car_state/frenet/odom` | `nav_msgs/msg/Odometry` | Frenet state estimator | Ego 차량의 `s`, `d` 상태 |
-| `/car_state/odom` | `nav_msgs/msg/Odometry` | State estimator | Tracking visibility 검사용 전역 pose |
-| `/perception/detection/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | `detect` | Tracking 측정값 |
-| `/tf`, `/tf_static` | TF2 | Localization/sensor TF publisher | Scan frame을 `map`으로 변환 |
+### Detection (`detect`)
 
-`tracking`은 위 입력을 모두 사용합니다. `detect`는 `/scan`,
-`/global_waypoints`, `/car_state/frenet/odom`과 TF를 사용합니다.
+| Topic/TF | Message type | Provider | 의미 |
+|---|---|---|---|
+| `/scan` | `sensor_msgs/msg/LaserScan` | LiDAR driver 또는 simulator | De-skew와 Adaptive Breakpoint Detection에 사용하는 원본 scan |
+| `/global_waypoints` | `f110_msgs/msg/WpntArray` | Global planner/waypoint publisher | Cartesian↔Frenet 변환과 좌·우 track boundary 계산 |
+| `/car_state/frenet/odom` | `nav_msgs/msg/Odometry` | Frenet converter | Ego 차량의 현재 `s` 위치와 전방 검출 범위 계산 |
+| `map <- LaserScan.header.frame_id` | TF2 | Localization/sensor TF publisher | 각 scan point를 `map` 좌표로 변환하고 de-skew 수행 |
+
+### Tracking (`tracking`)
+
+| Topic | Message type | Provider | 의미 |
+|---|---|---|---|
+| `/perception/detection/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | `detect` | Kalman Filter에 들어가는 frame별 obstacle 측정값 |
+| `/global_waypoints` | `f110_msgs/msg/WpntArray` | Global planner/waypoint publisher | Frenet 변환과 track length/lap wrap-around 계산 |
+| `/car_state/frenet/odom` | `nav_msgs/msg/Odometry` | Frenet converter | Ego `s` 기준 전방 거리와 lap 진행 계산 |
+| `/car_state/odom` | `nav_msgs/msg/Odometry` | State estimator/localization | Ego 전역 위치·yaw를 이용한 LiDAR visibility 판정 |
+| `/scan` | `sensor_msgs/msg/LaserScan` | LiDAR driver 또는 simulator | 미검출 track이 실제로 보여야 하는 위치인지, 가려졌는지 판단 |
 
 ## 출력 토픽
 
-| Topic | Message type | Consumer | Purpose |
+### Detection (`detect`)
+
+| Topic | Message type | Consumer | 의미 |
 |---|---|---|---|
-| `/perception/detection/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | `tracking` | Detection 측정 장애물 |
-| `/perception/obstacles_markers_new` | `visualization_msgs/msg/MarkerArray` | RViz | Rotated detection CUBE |
-| `/perception/breakpoints_markers` | `visualization_msgs/msg/MarkerArray` | RViz | Breakpoint/cluster 디버그 표시 |
-| `/perception/detect_bound` | `visualization_msgs/msg/Marker` | RViz | Detection track boundary |
-| `/perception/detection/latency` | `std_msgs/msg/Float32` | Monitor | `measure=true`일 때 detection latency |
-| `/perception/obstacles` | `f110_msgs/msg/ObstacleArray` | Planner/controller/state machine | 최종 static + dynamic track |
-| `/perception/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | Planner/debug tools | 최종 non-static track |
-| `/perception/static_dynamic_marker_pub` | `visualization_msgs/msg/MarkerArray` | RViz | Track 분류 시각화 |
-| `/perception/tracking/latency` | `std_msgs/msg/Float32` | Monitor | `measure=true`일 때 tracking latency |
+| `/perception/detection/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | `tracking` | Cluster에서 계산한 Frenet 중심·경계·크기를 담은 추적 전 측정값 |
+| `/perception/obstacles_markers_new` | `visualization_msgs/msg/MarkerArray` | RViz | 검출 장애물의 rotated bounding box |
+| `/perception/breakpoints_markers` | `visualization_msgs/msg/MarkerArray` | RViz | ABD가 분리한 각 cluster의 시작점·끝점 |
+| `/perception/detect_bound` | `visualization_msgs/msg/Marker` | RViz | Global waypoint로 계산한 좌·우 track boundary |
+| `/perception/detection/latency` | `std_msgs/msg/Float32` | Monitor | `measure=true`일 때 한 scan의 detection 처리 시간(초) |
+
+### Tracking (`tracking`)
+
+| Topic | Message type | Consumer | 의미 |
+|---|---|---|---|
+| `/perception/obstacles` | `f110_msgs/msg/ObstacleArray` | Planner/controller/state machine | `min_hits`를 통과한 최종 static + dynamic/unclassified track |
+| `/perception/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | Planner/debug tools | 최종 결과 중 static이 아닌 dynamic/unclassified track |
+| `/perception/static_dynamic_marker_pub` | `visualization_msgs/msg/MarkerArray` | RViz | KF 위치, track ID, static/dynamic 분류 결과 |
+| `/perception/tracking/latency` | `std_msgs/msg/Float32` | Monitor | `measure=true`일 때 한 obstacle callback의 tracking 처리 시간(초) |
 
 ## TF 요구사항
 
@@ -283,12 +297,25 @@ ros2 topic echo /perception/obstacles --once
 
 ## RViz marker
 
-- Detection: rotated `CUBE`
-- Static track: 초록색 sphere
-- Dynamic track: 빨간색 sphere
-- Unclassified track: 마젠타 sphere
+RViz의 Fixed Frame은 `map`으로 설정합니다.
 
-RViz의 Fixed Frame은 기본적으로 `map`으로 설정합니다.
+| Topic | Display | 모양/색 | 의미 |
+|---|---|---|---|
+| `/perception/detect_bound` | `Marker` | 빨간 `SPHERE_LIST`, 지름 0.04 m | Global waypoint에서 계산한 주행 가능 영역의 좌·우 경계 |
+| `/perception/breakpoints_markers` | `MarkerArray` | 초록~청록 `SPHERE`, 지름 0.25 m | 각 LiDAR cluster의 첫 point와 마지막 point. 색 차이는 cluster 구분용 |
+| `/perception/obstacles_markers_new` | `MarkerArray` | 청록 `CUBE`, alpha 0.5 | Rotated box fitting 결과. 중심은 장애물 위치, 회전은 주축 방향, 크기는 검출 크기(최소 0.35 m) |
+| `/perception/static_dynamic_marker_pub` | `MarkerArray` | `SPHERE`, alpha 0.6 | KF로 보정된 최종 track 위치. Marker ID는 track ID |
+
+Tracking sphere 색상:
+
+- 초록색: static으로 확정된 track
+- 빨간색: dynamic으로 확정된 track
+- 마젠타: 관측 시간이 부족해 아직 분류되지 않은 track
+- 크기 0.8 m: Ego 기준 전방 `tracking.dist_infront` 안의 track
+- 크기 0.55 m: 그 외 유지 중인 track
+
+`ObstacleArray` 토픽은 RViz 기본 display가 아니므로 수치 결과는 `ros2 topic
+echo`로 보고, 공간 결과는 위 Marker/MarkerArray 토픽으로 확인합니다.
 
 ## 모니터
 
