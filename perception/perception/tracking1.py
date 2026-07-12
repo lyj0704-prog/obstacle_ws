@@ -609,7 +609,7 @@ class StaticDynamic(Node):
             elif tracked.static_flag is True:
                 marker.color.g = 1.0  # 정적: 초록
             else:
-                marker.color.r = 1.0  # 미분류: 마젠타
+                marker.color.r = 1.0  # 미분류: 핑크색
                 marker.color.b = 1.0
 
             x, y = self.converter.get_cartesian(s, d)

@@ -310,7 +310,7 @@ Tracking sphere 색상:
 
 - 초록색: static으로 확정된 track
 - 빨간색: dynamic으로 확정된 track
-- 마젠타: 관측 시간이 부족해 아직 분류되지 않은 track
+- 핑크색: 관측 시간이 부족해 아직 분류되지 않은 track
 - 크기 0.8 m: Ego 기준 전방 `tracking.dist_infront` 안의 track
 - 크기 0.55 m: 그 외 유지 중인 track
 
