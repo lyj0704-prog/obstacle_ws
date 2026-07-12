@@ -80,13 +80,13 @@ ROS 2 package 이름은 `perception`이며, 기본 executable은 `detect`와
 |---|---|---|---|
 | `/scan` | `sensor_msgs/msg/LaserScan` | LiDAR driver 또는 simulator | Detection 입력과 tracking visibility 검사 |
 | `/global_waypoints` | `f110_msgs/msg/WpntArray` | ForzaETH global planner/waypoint publisher | Frenet 변환, track boundary, lap 길이 |
-| `/car_state/odom_frenet` | `nav_msgs/msg/Odometry` | Frenet state estimator | Ego 차량의 `s`, `d` 상태 |
+| `/car_state/frenet/odom` | `nav_msgs/msg/Odometry` | Frenet state estimator | Ego 차량의 `s`, `d` 상태 |
 | `/car_state/odom` | `nav_msgs/msg/Odometry` | State estimator | Tracking visibility 검사용 전역 pose |
 | `/perception/detection/raw_obstacles` | `f110_msgs/msg/ObstacleArray` | `detect` | Tracking 측정값 |
 | `/tf`, `/tf_static` | TF2 | Localization/sensor TF publisher | Scan frame을 `map`으로 변환 |
 
 `tracking`은 위 입력을 모두 사용합니다. `detect`는 `/scan`,
-`/global_waypoints`, `/car_state/odom_frenet`과 TF를 사용합니다.
+`/global_waypoints`, `/car_state/frenet/odom`과 TF를 사용합니다.
 
 ## 출력 토픽
 
@@ -194,7 +194,7 @@ ros2 launch perception simulation/fake_perception_test_launch.py
 
 - `/scan`: 차량 전방 2 m에 폭 0.30 m인 정적 장애물
 - `/global_waypoints`: 반지름 5 m의 폐곡선 waypoint
-- `/car_state/odom`, `/car_state/odom_frenet`
+- `/car_state/odom`, `/car_state/frenet/odom`
 - TF `map <- laser`
 
 터미널 1에서 빌드하고 detection, tracking, fake input을 함께 실행합니다.
@@ -262,7 +262,7 @@ publisher를 별도로 실행한 뒤 기본 `perception_launch.xml`을 사용해
 ros2 topic hz /scan
 ros2 topic hz /global_waypoints
 ros2 topic hz /car_state/odom
-ros2 topic hz /car_state/odom_frenet
+ros2 topic hz /car_state/frenet/odom
 ros2 topic type /global_waypoints
 ```
 

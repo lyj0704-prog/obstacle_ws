@@ -17,7 +17,9 @@ class FakePerceptionTest(Node):
         super().__init__("fake_perception_test")
         self.scan_pub = self.create_publisher(LaserScan, "/scan", 10)
         self.wpnt_pub = self.create_publisher(WpntArray, "/global_waypoints", 10)
-        self.frenet_odom_pub = self.create_publisher(Odometry, "/car_state/odom_frenet", 10)
+        self.frenet_odom_pub = self.create_publisher(
+            Odometry, "/car_state/frenet/odom", 10
+        )
         self.odom_pub = self.create_publisher(Odometry, "/car_state/odom", 10)
         self.tf_broadcaster = TransformBroadcaster(self)
         self.raw_count = 0

@@ -120,7 +120,9 @@ class Detect(Node):
         # 스캔 콜백 구동 (타이머 폴링 제거)
         self.create_subscription(LaserScan, "/scan", self.laser_cb, 10)
         self.create_subscription(WpntArray, "/global_waypoints", self.path_cb, 10)
-        self.create_subscription(Odometry, "/car_state/odom_frenet", self.car_state_cb, 10)
+        self.create_subscription(
+            Odometry, "/car_state/frenet/odom", self.car_state_cb, 10
+        )
 
         self.breakpoints_markers_pub = self.create_publisher(
             MarkerArray, "/perception/breakpoints_markers", 10

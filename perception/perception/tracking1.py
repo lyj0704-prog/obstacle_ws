@@ -283,7 +283,9 @@ class StaticDynamic(Node):
             10,
         )
         self.create_subscription(WpntArray, "/global_waypoints", self.path_cb, 10)
-        self.create_subscription(Odometry, "/car_state/odom_frenet", self.car_state_cb, 10)
+        self.create_subscription(
+            Odometry, "/car_state/frenet/odom", self.car_state_cb, 10
+        )
         self.create_subscription(Odometry, "/car_state/odom", self.car_state_glob_cb, 10)
         self.create_subscription(LaserScan, "/scan", self.scans_cb, 10)
 
