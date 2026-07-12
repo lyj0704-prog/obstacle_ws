@@ -15,17 +15,22 @@ obstacle_ws/
 │   ├── config/perception_params.yaml
 │   ├── launch/
 │   │   ├── perception_launch.xml
-│   │   ├── detect_bag_launch.xml
-│   │   └── fake_perception_test_launch.py
+│   │   └── simulation/
+│   │       ├── detect_bag_launch.xml
+│   │       └── fake_perception_test_launch.py
 │   ├── perception/
 │   │   ├── __init__.py
 │   │   ├── detect1.py
 │   │   ├── tracking1.py
 │   │   ├── frenet_utils.py
-│   │   ├── fake_perception_test.py
-│   │   ├── obs_monitor.py
-│   │   ├── perception_result_checker.py
-│   │   └── static_path_detour.py
+│   │   ├── simulation/
+│   │   │   ├── __init__.py
+│   │   │   ├── fake_perception_test.py
+│   │   │   ├── perception_result_checker.py
+│   │   │   └── static_path_detour.py
+│   │   └── tools/
+│   │       ├── __init__.py
+│   │       └── obs_monitor.py
 │   ├── resource/perception
 │   ├── test/
 │   ├── LICENSE
@@ -39,6 +44,11 @@ obstacle_ws/
 ROS 2 package 이름은 `perception`이며, 기본 executable은 `detect`와
 `tracking`입니다. 소스 파일명은 기존 RACE_STACK 계약대로 `detect1.py`,
 `tracking1.py`를 유지합니다.
+
+`perception/perception/`의 최상위 세 파일은 실제 runtime 알고리즘입니다.
+`simulation/`은 fake input과 결과 checker 등 통합시험 전용이고, `tools/`는
+실행 중 상태를 관찰하는 진단 도구입니다. Simulation helper는 기본
+`perception_launch.xml`에 자동 포함되지 않습니다.
 
 ## 핵심 알고리즘
 
@@ -167,14 +177,15 @@ ros2 launch perception perception_launch.xml
 Rosbag 재생:
 
 ```bash
-ros2 launch perception detect_bag_launch.xml bag_file:=/absolute/path/to/bag
+ros2 launch perception simulation/detect_bag_launch.xml \
+  bag_file:=/absolute/path/to/bag
 ```
 
 Synthetic fake publisher는 실제 launch에 자동 포함되지 않습니다. 별도 시험할
 때만 실행합니다.
 
 ```bash
-ros2 launch perception fake_perception_test_launch.py
+ros2 launch perception simulation/fake_perception_test_launch.py
 ```
 
 ## 실행 전 입력 확인
