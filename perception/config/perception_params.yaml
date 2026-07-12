@@ -1,0 +1,48 @@
+/detect:
+  ros__parameters:
+    measure: false
+    from_bag: false
+    map_frame: map
+    detect:
+      rate: 40.0
+      viz_rate: 10.0
+      deskew: true
+      lambda: 10.0
+      sigma: 0.03
+      min_2_points_dist: 0.05
+      min_obs_size: 10
+      min_points_floor: 3
+      min_size_ref_dist: 3.0
+      cluster_merge_dist: 0.35
+      max_obs_size: 0.5
+      max_viewing_distance: 9.0
+      boundaries_inflation: 0.15
+
+/tracking:
+  ros__parameters:
+    measure: false
+    map_frame: map
+    tracking:
+      rate: 40.0
+      viz_rate: 10.0
+      max_dist: 1.0
+      ttl_static_sec: 0.3
+      ttl_dynamic_sec: 4.0
+      min_nb_meas: 5
+      min_hits: 5
+      min_obs_time: 0.5
+      classification_window: 3.0
+      min_std: 0.16
+      max_std: 0.2
+      vs_dynamic_threshold: 0.6
+      vs_dynamic_min_count: 4
+      track_merge_dist: 0.5
+      ttl_hidden_sec: 60.0
+      dist_infront: 8.0
+      publish_static: true
+      sigma_meas: 0.06
+      sigma_accel: 3.0
+      init_vel_std: 2.0
+      unclassified_as_static: false
+      visibility_margin: 0.4
+      max_viewing_distance: 9.0
